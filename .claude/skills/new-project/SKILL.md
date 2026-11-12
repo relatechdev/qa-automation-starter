@@ -62,6 +62,11 @@ If the test id attribute is not `data-testid`, change `testIdAttribute` in `play
 
 If signing in needs single sign-on or a second factor, stop and show the person the options in `docs/04-how-it-works.md` (Signing in) before building anything.
 
+Two things to find out now, with the saved state (`npx playwright cli state-load`):
+
+- **Does the saved session last?** Open the application with it, wait two minutes, open it again with the same file. Sent back to sign-in: the sign-in service rotates its tokens, so set `"signInPerWorker": true` in each environment's file.
+- **How does the API authorise a call?** Look at the application's calls (`npx playwright cli requests 2>&1 | node scripts/redact.mjs`, then one `request <n>` the same way). An `Authorization: Bearer` header: set `"apiAuth": "bearer"`. Write what was found under Signing in and API in `PROJECT.md`.
+
 ## 6. Hand over
 
 - `npm run check` passes.

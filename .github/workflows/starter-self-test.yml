@@ -28,6 +28,14 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: cp .env.example .env
       - run: npm test
+      - name: The same tests, signing in per worker and calling the API with a token
+        run: |
+          jq '. + {signInPerWorker: true, apiAuth: "bearer"}' config/environments/local.json \
+            > config/environments/local-token.json
+          sed -n 's/^LOCAL_/LOCAL_TOKEN_/p' .env.example >> .env
+          node demo-app/server.mjs &
+          until curl -sf http://localhost:3210/health > /dev/null; do sleep 1; done
+          TEST_ENV=local-token npm test
       - name: Keep the report
         if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

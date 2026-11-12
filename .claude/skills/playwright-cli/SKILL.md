@@ -6,6 +6,8 @@ allowed-tools: Bash(playwright-cli:*) Bash(npx playwright:*) Bash(npx --no-insta
 
 # Browser Automation with playwright-cli
 
+**In this repository:** the `cookie-`, `localstorage-`, `sessionstorage-`, `request`, `response-` and `console` commands can print a session's secrets. Run them through the redactor, `<command> 2>&1 | node scripts/redact.mjs`; a hook refuses them otherwise (`.claude/rules/security.md`).
+
 ## Quick start
 
 ```bash

@@ -22,7 +22,7 @@ End-to-end and API tests for {{name}}, written with Playwright and TypeScript. B
 | `npm run test:headed` / `npm run test:debug` | see the browser, or step through with the inspector |
 | `npm run report` | the report of the last run |
 | `npm run cases` | how much of the case inventory is automated, and what comes next |
-| `npm run check` | types, lint, formatting and the scripts' own tests: run it before a pull request |
+| `npm run check` | types, lint, formatting, the scripts' own tests and a scan for secrets: run it before a pull request |
 | `npm run doctor` | is this machine ready to run tests? |
 
 ## Working with Claude

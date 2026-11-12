@@ -8,6 +8,8 @@ allowed-tools: Bash(npx playwright trace:*)
 
 Inspect `.zip` trace files produced by Playwright tests without opening a browser.
 
+**In this repository:** a trace holds the typed password and the request headers (tokens, cookies). Every command but `open` and `close` runs through the redactor, `npx playwright trace <command> 2>&1 | node scripts/redact.mjs`; a hook refuses it otherwise (`.claude/rules/security.md`).
+
 ## Workflow
 
 1. Start with `trace open <trace.zip>` to extract the trace and see its metadata.

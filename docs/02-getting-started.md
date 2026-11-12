@@ -66,7 +66,7 @@ The starter comes with a small application, so everything above works before you
 1. `git switch -c <a-branch-name>`: a branch for the work.
 2. Pick a case: `npm run cases` lists what is next.
 3. Write its test with `/new-web-test TC-…` or `/new-api-test TC-…`, or by hand.
-4. `npm run check` before a pull request: types, lint, formatting, and the inventory agreeing with the specs.
+4. `npm run check` before a pull request: types, lint, formatting, no secrets in the files, and the inventory agreeing with the specs.
 5. Commit, push the branch, open a pull request. A colleague reviews it.
 
 ## When something does not work

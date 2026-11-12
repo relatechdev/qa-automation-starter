@@ -54,7 +54,7 @@ What to ask the company for before all this: [Project intake](docs/03-project-in
 | `npm run test:ui` | Playwright's UI mode: watch, step through and re-run tests |
 | `npm run report` | the report of the last run |
 | `npm run cases` | how much of the case inventory is automated, and what comes next |
-| `npm run check` | types, lint, formatting, the scripts' own tests: the gate before a pull request |
+| `npm run check` | types, lint, formatting, the scripts' own tests, a scan for secrets: the gate before a pull request |
 | `npm run demo` | the demo application on http://localhost:3210 |
 
 In Claude Code: `/guide`, `/check-setup`, `/new-project`, `/triage-cases`, `/new-web-test`, `/new-api-test`, `/fix-test`, `/review-tests`.

@@ -20,7 +20,20 @@ interface EnvironmentFile {
   roles: string[];
   /** Tests may only look, never create, change or delete. Production is always read-only. */
   readOnly: boolean;
+  /**
+   * Each test worker signs in on its own and hands the renewed session from test to test.
+   * For applications whose saved session stops working soon after it is used, as with
+   * rotating refresh tokens. Off: every test starts from the state the setup saved.
+   */
+  signInPerWorker: boolean;
+  /**
+   * How the API authorises a call: `cookies`, the signed-in session's cookies, or `bearer`,
+   * the access token the application itself sends in its `Authorization` header.
+   */
+  apiAuth: 'cookies' | 'bearer';
 }
+
+const API_AUTH = ['cookies', 'bearer'] as const;
 
 const root = path.resolve(__dirname, '..');
 
@@ -50,11 +63,19 @@ function readEnvironment(name: string): EnvironmentFile {
   const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as Partial<EnvironmentFile>;
   if (!parsed.baseUrl) fail(`config/environments/${name}.json has no baseUrl.`);
   const baseUrl = parsed.baseUrl.replace(/\/+$/, '');
+  const apiAuth = parsed.apiAuth ?? 'cookies';
+  if (!API_AUTH.includes(apiAuth)) {
+    fail(
+      `config/environments/${name}.json: apiAuth is "${apiAuth}", not ${API_AUTH.join(' or ')}.`,
+    );
+  }
   return {
     baseUrl,
     apiUrl: parsed.apiUrl ? parsed.apiUrl.replace(/\/+$/, '') : baseUrl,
     roles: parsed.roles?.length ? parsed.roles : ['user'],
     readOnly: parsed.readOnly ?? false,
+    signInPerWorker: parsed.signInPerWorker ?? false,
+    apiAuth,
   };
 }
 

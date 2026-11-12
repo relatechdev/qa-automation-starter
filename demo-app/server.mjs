@@ -31,9 +31,13 @@ function send(res, status, body, headers = {}) {
   res.end(isJson ? JSON.stringify(body) : (body ?? ''));
 }
 
+// The session comes as a cookie, or as a bearer token: the pages send both, as many
+// single-page applications do, so API tests can practise either (apiAuth).
 function sessionOf(req) {
-  const match = /(?:^|;\s*)session=([^;]+)/.exec(req.headers.cookie ?? '');
-  return match && sessions.has(match[1]) ? match[1] : null;
+  const bearer = /^Bearer (\S+)$/.exec(req.headers.authorization ?? '')?.[1];
+  const cookie = /(?:^|;\s*)session=([^;]+)/.exec(req.headers.cookie ?? '')?.[1];
+  const session = bearer ?? cookie;
+  return session && sessions.has(session) ? session : null;
 }
 
 async function readJson(req) {
@@ -71,7 +75,7 @@ async function api(req, res, url) {
     return send(
       res,
       200,
-      { email: ACCOUNT.email },
+      { email: ACCOUNT.email, token: session },
       {
         'Set-Cookie': `session=${session}; HttpOnly; Path=/; SameSite=Lax`,
       },
@@ -137,14 +141,22 @@ function page(title, body, { nav = true } = {}) {
       </header>
       <script>
         document.querySelector('#sign-out').addEventListener('click', async () => {
-          await fetch('/api/logout', { method: 'POST' });
+          await call('/api/logout', { method: 'POST' });
+          localStorage.removeItem('token');
           location.href = '/login';
         });
       </script>`
     : '';
   return `<!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8"><title>${title} · Demo</title><style>${STYLE}</style></head>
+  <head><meta charset="utf-8"><title>${title} · Demo</title><style>${STYLE}</style>
+    <script>
+      function call(path, init = {}) {
+        const token = localStorage.getItem('token');
+        return fetch(path, { ...init, headers: token ? { Authorization: 'Bearer ' + token } : {} });
+      }
+    </script>
+  </head>
   <body>${header}<main>${body}</main></body>
 </html>`;
 }
@@ -165,7 +177,10 @@ const LOGIN = page(
       event.preventDefault();
       const body = JSON.stringify(Object.fromEntries(new FormData(form)));
       const response = await fetch('/api/login', { method: 'POST', body });
-      if (response.ok) return (location.href = '/');
+      if (response.ok) {
+        localStorage.setItem('token', (await response.json()).token);
+        return (location.href = '/');
+      }
       error.textContent = (await response.json()).error;
       error.hidden = false;
     });
@@ -181,7 +196,7 @@ const DASHBOARD = page(
     <div class="tile">High priority <strong data-testid="high-priority-items">…</strong></div>
   </div>
   <script>
-    fetch('/api/summary').then((response) => response.json()).then((summary) => {
+    call('/api/summary').then((response) => response.json()).then((summary) => {
       document.querySelector('[data-testid=total-items]').textContent = summary.total;
       document.querySelector('[data-testid=high-priority-items]').textContent = summary.highPriority;
     });
@@ -227,7 +242,7 @@ const ITEMS = page(
       remove.textContent = 'Delete';
       remove.setAttribute('aria-label', 'Delete ' + item.name);
       remove.addEventListener('click', async () => {
-        await fetch('/api/items/' + item.id, { method: 'DELETE' });
+        await call('/api/items/' + item.id, { method: 'DELETE' });
         await load();
       });
       const actions = document.createElement('td');
@@ -237,7 +252,7 @@ const ITEMS = page(
     }
 
     async function load() {
-      const response = await fetch('/api/items?q=' + encodeURIComponent(search.value));
+      const response = await call('/api/items?q=' + encodeURIComponent(search.value));
       const { items } = await response.json();
       rows.replaceChildren(...items.map(row));
       empty.hidden = items.length > 0;
@@ -252,7 +267,7 @@ const ITEMS = page(
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const body = JSON.stringify(Object.fromEntries(new FormData(form)));
-      const response = await fetch('/api/items', { method: 'POST', body });
+      const response = await call('/api/items', { method: 'POST', body });
       error.hidden = response.ok;
       if (!response.ok) return (error.textContent = (await response.json()).error);
       form.reset();

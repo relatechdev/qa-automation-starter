@@ -36,7 +36,7 @@ export class InvoicesClient extends BaseClient {
 - `src/api/<resource>-client.ts`, class `<Resource>Client` extending `BaseClient`, registered in `Api` (`src/api/api.ts`) so tests reach it as `api.<resource>`.
 - Each call exists twice. `<verb>Response()` returns the raw response, for a test that asserts on a status or an error body, and takes `unknown` so it can send a wrong body. `<verb>()` is for preparing data: it takes a typed body, returns the typed result and throws when the call fails.
 - The types of a body come from the API's documentation or from a real response, never from a guess. Before writing a client, look: the OpenAPI document named in `PROJECT.md`, or `npx playwright cli` and its `requests` command while doing the action in the UI.
-- Calls ride on the signed-in session of the test's role. If the API wants a token in a header, add it once in `BaseClient`, not in each client.
+- Calls ride on the signed-in session of the test's role. When the API wants `Authorization: Bearer <token>` instead of cookies, set `"apiAuth": "bearer"` in the environment's file: the `api` fixture then takes the token the application itself sends (`src/api/api-auth.ts`). Clients do not handle authorisation themselves (`docs/04-how-it-works.md`, Calling the API).
 - A client that creates records has `deleteTestData(createdBefore)` and is listed in `Api.sweepable`, so the cleanup after a run finds what a broken run left behind.
 
 ## What an endpoint's tests cover

@@ -24,7 +24,7 @@ A spec never contains a URL, an account or a raw locator. It says what happens i
 
 1. **Configuration.** `config/env.ts` reads `TEST_ENV`, loads `config/environments/<name>.json` and the accounts from `.env`. Something missing stops the run with a message that says what.
 2. **Setup** (`tests/setup/auth.setup.ts`). Signs in once per role through the real sign-in page and saves the browser's state to `.auth/<environment>-<role>.json`.
-3. **Tests.** The `web` project runs `tests/web/` in Chromium, the `api` project runs `tests/api/` without a browser. Both start signed in from the saved state, and run in parallel, so no test may depend on another.
+3. **Tests.** The `web` project runs `tests/web/` in Chromium, the `api` project runs `tests/api/` without a browser. Both start signed in from the saved state (or from their worker's own session, see [Signing in](#signing-in)), and run in parallel, so no test may depend on another.
 4. **Cleanup** (`tests/setup/cleanup.teardown.ts`). Deletes the test data that earlier, broken runs left behind.
 5. **Report.** `playwright-report/` holds the result; `test-results/` holds a trace and a screenshot of every failure.
 
@@ -54,6 +54,7 @@ STAGING_ADMIN_PASSWORD=…
 - **Another environment for one run:** `TEST_ENV=dev npm test`.
 - **A new environment:** add its file, add its keys to `.env.example` (without values) and to your `.env`.
 - **A new role:** add it to `roles` in each environment file and add its keys. The setup signs it in; a test asks for it with `test.use({ role: 'admin' })`.
+- **Two keys for the applications that need them:** `"signInPerWorker": true` ([Signing in](#signing-in)) and `"apiAuth": "bearer"` ([Calling the API](#calling-the-api)). Both are off when left out.
 
 ## Signing in
 
@@ -69,6 +70,17 @@ When the application signs people in through another company's page (single sign
 2. Signing in through the API, when it has an endpoint that returns a session.
 3. A second factor based on an authenticator secret: the setup can compute the code from the secret, kept in `.env`.
 4. Signing in by hand once with `npx playwright codegen --save-storage=.auth/<environment>-<role>.json <address>`, and reusing that state until it expires. A stopgap: it does not work in the pipeline.
+
+**When the saved session stops working a minute into a run.** Some sign-in services (Auth0, Cognito, Frontegg and others, with "refresh token rotation") replace the session's token every time it is used, and the saved one stops working shortly after. The first tests pass and the later ones land on the sign-in page. Set `"signInPerWorker": true` in the environment's file: each worker then signs in once on its own, about one sign-in per parallel worker, and hands the renewed session from one test to the next. The setup still signs in first, so a wrong account stops the run at once. To check whether an application needs it, run the same test with `--repeat-each=15 --workers=1`: without it, the runs after the first minute fail.
+
+## Calling the API
+
+The `api` fixture calls the API as the test's role, in one of two ways, set by `apiAuth` in the environment's file:
+
+- **`"cookies"`** (the default): the signed-in session's cookies go with every call. Right when the API and the application share a session.
+- **`"bearer"`**: the call carries `Authorization: Bearer <token>`. Right when the application sends a token to its API, as most single-page applications do: open the browser's developer tools, Network, and look at a call to the API. The token is taken from the application's own first call to `apiUrl` (`src/api/api-auth.ts`), kept for the worker, and taken again before it expires. When the API has a sign-in endpoint that returns a token, call it in `captureApiToken` instead.
+
+Tests and clients do not change between the two: they use `api` as before.
 
 ## Test data
 
@@ -92,6 +104,7 @@ An environment with `"readOnly": true` is only looked at. Production always is.
 - `npm run report` opens the last report. A failed test shows the error, the step, a screenshot and a link to its trace.
 - The trace is a recording: every action, the page before and after it, the network calls and the console. `npx playwright show-trace test-results/<test>/trace.zip` opens it; in the report it opens with a click.
 - Both folders are ignored by git. They show whatever was on the screen: do not share them outside the team.
+- A trace also holds what signed the test in: the typed password, cookies, tokens in request headers. When Claude reads one, it pipes the output through `node scripts/redact.mjs`, which hides them; a guard refuses the command otherwise. Do the same when you paste trace output anywhere.
 
 ## The quality gate
 
@@ -101,6 +114,7 @@ An environment with `"readOnly": true` is only looked at. Production always is.
 - **Lint** (`eslint`): a forgotten `await`, a fixed wait, `test.only`, `force: true`, an assertion inside a page object, `test` imported from the wrong place.
 - **Formatting** (`prettier`).
 - **The scripts' own tests**, and **the inventory agreeing with the specs** (`npm run cases -- --check`).
+- **Secrets** (`npm run secrets`): no file git would commit holds a token, a key, a webhook address or a `.env`. It names the file and the line, never the value.
 
 The pipeline runs the same on every pull request.
 
@@ -112,7 +126,7 @@ The pipeline runs the same on every pull request.
 | `PROJECT.md` | The facts of this project: the application, environments, roles, data rules, people, open questions. |
 | `.claude/rules/` | The conventions in detail, each loaded when Claude touches a matching file: `web-tests.md` for `tests/web/`, `page-objects.md` for `src/pages/`, and so on. `security.md` is always loaded. What is learned about one area of the application goes into `app-<area>.md`. |
 | `.claude/skills/` | The procedures, typed as commands: `/guide`, `/check-setup`, `/triage-cases`, `/new-web-test`, `/new-api-test`, `/fix-test`, `/review-tests`. `playwright-cli` and `playwright-trace` come from Playwright itself: how Claude drives a browser and reads a trace. |
-| `.claude/hooks/` | Guards that run by themselves: Claude cannot open `.env` or `.auth/`; a run against a read-only environment, a forced push and a push to `main` need your yes; every file Claude edits is formatted and linted at once. |
+| `.claude/hooks/` | Guards that run by themselves: Claude cannot open `.env` or `.auth/`; output that can show a token or a cookie (a trace's requests, the browser's cookies) goes through `scripts/redact.mjs`; a run against a read-only environment, a forced push and a push to `main` need your yes; every file Claude edits is formatted and linted at once. |
 | `.claude/settings.json` | Wires the hooks, and lists the commands Claude may run without asking. |
 
 All of it loads when Claude is started in this folder.

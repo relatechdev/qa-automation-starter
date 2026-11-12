@@ -23,7 +23,7 @@ Answer in the language the person writes in. Code, comments, test titles, commit
 | Sign in again (renew `.auth/`) | `npm run auth` |
 | The last report | `npm run report` |
 | Look at the live application | `npx playwright cli …` (the `playwright-cli` skill) |
-| Read a failed run's trace | `npx playwright trace …` (the `playwright-trace` skill) |
+| Read a failed run's trace | `npx playwright trace … 2>&1 \| node scripts/redact.mjs` (the `playwright-trace` skill) |
 | Automated and remaining cases | `npm run cases` |
 | The gate before a pull request | `npm run check` |
 

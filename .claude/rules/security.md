@@ -7,6 +7,8 @@ These rules apply to every task in this repository.
 - Accounts live in `.env` on a machine and in the `DOTENV` secret in CI. Nowhere else: not in code, config, docs, test titles, commit messages or the chat.
 - Claude never opens `.env` or `.auth/`; a hook refuses it. When a value is missing, name the key and ask the person to add it. `npm run doctor` shows which keys are set without showing their values.
 - If a password or a token shows up in the conversation, in a file or in a log, say so at once and tell the person to change it.
+- Output that can carry a password, a token or a cookie is read through the redactor: `<command> 2>&1 | node scripts/redact.mjs`. That is every `npx playwright trace` command but `open` and `close` (a trace holds the typed password and the request headers), and the `cookie-`, `localstorage-`, `sessionstorage-`, `request`, `response-` and `console` commands of `npx playwright cli`. A hook refuses them without it. It does not cover everything: before printing anything else that may hold a header or a token, pipe it through the redactor too.
+- `npm run check` includes `npm run secrets`, which fails when a file git would commit holds a token, a key or a webhook address.
 - Tests read accounts through `env.account(role)`. An email or a password is never written as a literal.
 
 ## The application's data

@@ -17,7 +17,7 @@ A red test is information. The goal is to learn what it says, not to make it gre
 ## 2. Read before changing anything
 
 - The error message and the line it points at.
-- The trace of the failed run (`test-results/<test>/trace.zip`): `npx playwright trace open <file>`, then `trace actions`, `trace action <id>`, `trace requests`, `trace console` (the `playwright-trace` skill). Look at the snapshot of the step before the failure: what was on the screen?
+- The trace of the failed run (`test-results/<test>/trace.zip`): `npx playwright trace open <file>`, then `trace actions`, `trace action <id>`, `trace requests`, `trace console` (the `playwright-trace` skill), each piped through `node scripts/redact.mjs`. Look at the snapshot of the step before the failure: what was on the screen?
 - The application as it is now: `npx playwright cli`, the same steps by hand.
 
 ## 3. Decide what is wrong

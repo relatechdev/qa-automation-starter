@@ -37,10 +37,31 @@ function checkCommand(command) {
   return null;
 }
 
+// Playwright commands whose output can carry a password, a token or a cookie: a trace's
+// actions and requests, the browser's cookies and storage, the network and the console.
+const REVEALING =
+  /\bplaywright(?:-cli|\s+cli)?\s+(?:-s=\S+\s+)?(?:trace\s+(?!(?:open|close|install-skill)\b)[a-z]|(?:cookie|localstorage|sessionstorage)-[a-z]|requests?\b|request-|response-|console\b)/;
+const REDACTOR = /\|\s*node\s+(?:\.\/)?scripts\/redact\.mjs\b/;
+const REASON_OUTPUT =
+  'This output can show passwords, tokens or cookies. Run the same command through the ' +
+  'redactor, which hides them: <command> 2>&1 | node scripts/redact.mjs';
+
+function checkOutput(command) {
+  for (const pipeline of command.split(/&&|\|\||[;\n]/)) {
+    const revealing = REVEALING.exec(pipeline);
+    const redactor = REDACTOR.exec(pipeline);
+    if (revealing && !(redactor && redactor.index > revealing.index)) return REASON_OUTPUT;
+  }
+  return null;
+}
+
 /** Why a tool call is refused, or null when it may go ahead. */
 export function refusal(event) {
   const input = event.tool_input ?? {};
-  if (event.tool_name === 'Bash') return checkCommand(input.command ?? '');
+  if (event.tool_name === 'Bash') {
+    const command = input.command ?? '';
+    return checkCommand(command) ?? checkOutput(command);
+  }
   if (event.tool_name === 'Grep')
     return isSecretPath(input.path ?? '') ?? isSecretPath(input.glob ?? '');
   return isSecretPath(input.file_path ?? input.notebook_path ?? '');

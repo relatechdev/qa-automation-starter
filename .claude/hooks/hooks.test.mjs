@@ -69,6 +69,33 @@ test('commands that only use those files go ahead', () => {
   }
 });
 
+test('output that can carry a token or a cookie goes through the redactor', () => {
+  for (const command of [
+    'npx playwright trace request 30',
+    'npx playwright trace actions',
+    'npx playwright trace request 30 | head -40',
+    'npx playwright cli cookie-list',
+    'npx playwright cli -s=demo localstorage-list',
+    'playwright-cli request-headers 3',
+    'npx playwright cli requests',
+    'node scripts/redact.mjs | npx playwright trace request 3',
+    'npx playwright trace request 3 | node scripts/redact.mjs && npx playwright cli cookie-list',
+  ]) {
+    assert.ok(bash(command), command);
+  }
+  for (const command of [
+    'npx playwright trace request 30 2>&1 | node scripts/redact.mjs',
+    'npx playwright trace actions | node scripts/redact.mjs | head -40',
+    'npx playwright trace open test-results/run/trace.zip',
+    'npx playwright trace close',
+    'npx playwright test --grep request',
+    'npx playwright cli snapshot',
+    'npx playwright cli goto https://example.test/requests',
+  ]) {
+    assert.equal(bash(command), null, command);
+  }
+});
+
 function checkout(files) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'hooks-'));
   for (const [name, content] of Object.entries(files)) {
