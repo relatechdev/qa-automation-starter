@@ -1,0 +1,19 @@
+node_modules/
+
+# Secrets and signed-in browser sessions never leave the machine.
+.env
+.env.*
+!.env.example
+.auth/
+
+# Run output: reports, traces, screenshots and videos can show the application's data.
+test-results/
+playwright-report/
+blob-report/
+.playwright-cli/
+
+# The original test-case sheets stay out of git; the inventory in cases/ is what we keep.
+cases/source/
+
+.DS_Store
+*.log

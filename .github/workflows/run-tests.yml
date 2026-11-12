@@ -1,0 +1,68 @@
+# Runs the tests against an environment, on demand. The accounts come from the repository
+# secret DOTENV, which holds the lines of a .env file (docs/08-ci.md).
+name: Run tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment (a file in config/environments/)
+        type: string
+        default: local
+      suite:
+        description: What to run
+        type: choice
+        options: [all, web, api]
+        default: all
+      grep:
+        description: 'Only tests matching this tag or title, for example @smoke'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: run-tests-${{ inputs.environment }}
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      TEST_ENV: ${{ inputs.environment }}
+      SUITE: ${{ inputs.suite }}
+      GREP: ${{ inputs.grep }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Write the accounts
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          if [ -n "$DOTENV" ]; then
+            printf '%s\n' "$DOTENV" > .env
+          else
+            cp .env.example .env
+          fi
+
+      - name: Run the tests
+        run: |
+          args=()
+          if [ "$SUITE" != all ]; then args+=("--project=$SUITE"); fi
+          if [ -n "$GREP" ]; then args+=(--grep "$GREP"); fi
+          npx playwright test "${args[@]}"
+
+      - name: Keep the report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-${{ inputs.environment }}
+          path: playwright-report/
+          retention-days: 14

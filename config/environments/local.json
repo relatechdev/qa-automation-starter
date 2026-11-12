@@ -1,0 +1,6 @@
+{
+  "baseUrl": "http://localhost:3210",
+  "apiUrl": "http://localhost:3210/api",
+  "roles": ["user"],
+  "readOnly": false
+}

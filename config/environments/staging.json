@@ -1,0 +1,6 @@
+{
+  "baseUrl": "",
+  "apiUrl": "",
+  "roles": ["user"],
+  "readOnly": false
+}

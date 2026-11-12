@@ -1,0 +1,16 @@
+id,area,title,automation,priority,source,notes
+TC-001,Navigation,The dashboard opens and shows both totals as numbers,web,P1,,
+TC-002,Navigation,The main navigation leads to Items and back to the dashboard,web,P1,,
+TC-003,Sign-in,A wrong password is refused with the message "Wrong email or password.",web,P1,,
+TC-004,Sign-in,Signing out returns to the sign-in page and ends the session,web,P2,,
+TC-005,Items,Searching shows only the items whose name contains the text,web,P1,,
+TC-006,Items,A search without a match shows "No items match.",web,P3,,
+TC-007,Items,A new item appears in the list with the chosen priority,web,P1,,
+TC-008,Items,An item without a name is refused with "Name is required.",web,P2,,
+TC-009,Items,A deleted item leaves the list,web,P2,,
+TC-010,Items API,"A created item is returned by the list, and gone after its delete",api,P1,,
+TC-011,Items API,An item without a name or with an unknown priority is refused with 400,api,P2,,
+TC-012,Items API,Deleting an item that does not exist answers 404,api,P3,,
+TC-013,Items API,A caller who is not signed in gets 401,api,P1,,
+TC-014,Items API,A name longer than 60 characters is refused with 400,api,P3,,Left as a first exercise: /new-api-test TC-014
+TC-015,Dashboard,"The tiles follow the design: spacing, colours and font sizes",manual,P3,,A person judges the look

@@ -1,0 +1,1 @@
+This checkout is the starter with its demo application (TEST_ENV=local). To learn, run the demo tests and try the exercise in docs/02-getting-started.md. For a real project, the person creates a private repository from the template and runs /new-project there.

@@ -1,0 +1,14 @@
+node_modules/
+package-lock.json
+test-results/
+playwright-report/
+blob-report/
+.auth/
+.playwright-cli/
+
+# Markdown keeps the shape it was written in: padded tables only add noise.
+*.md
+
+# Installed by `npx playwright init-skills`; kept exactly as Playwright ships them.
+.claude/skills/playwright-cli/
+.claude/skills/playwright-trace/

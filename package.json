@@ -1,0 +1,41 @@
+{
+  "name": "qa-automation-starter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A starting point for end-to-end and API test automation with Playwright, TypeScript and Claude Code.",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "doctor": "node scripts/doctor.mjs",
+    "demo": "node demo-app/server.mjs",
+    "auth": "playwright test --project=setup --no-deps",
+    "test": "playwright test",
+    "test:web": "playwright test --project=web",
+    "test:api": "playwright test --project=api",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:headed": "playwright test --project=web --headed",
+    "test:debug": "playwright test --project=web --debug",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "cases": "node scripts/cases.mjs",
+    "sheet": "node scripts/sheet-to-text.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:scripts": "node --test scripts/ .claude/hooks/",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:scripts && npm run cases -- --check"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "eslint": "10.13.0",
+    "eslint-plugin-playwright": "2.12.1",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1"
+  }
+}
